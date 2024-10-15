@@ -33,8 +33,8 @@ Welcome to our computer vision-based game! In this game, enemy objects are falli
 
 **Problem Statement: Enemy Dodging Game**
 
-A player-controlled object is moved using face tracking or hand movements. The objective is to dodge falling objects (blocks) that randomly appear on the screen.
-The game could rely on OpenCV for face or hand tracking, and falling objects are randomly generated.
+A player-controlled object is moved using hand movements. The objective is to dodge falling objects (blocks) that randomly appear on the screen.
+The game could rely on OpenCV for hand tracking, and falling objects are randomly generated.
 
 
 ## Requirements
