@@ -22,3 +22,4 @@ In MediaPipe, hand landmarks refer to the precise points or landmarks detected o
 
 ### Reference material
 https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
+https://pypi.org/project/mediapipe/
