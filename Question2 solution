@@ -1,0 +1,96 @@
+import cv2
+import mediapipe as mp
+import numpy as np
+import random
+
+# Initialize MediaPipe Hands
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
+mp_drawing = mp.solutions.drawing_utils
+
+# Game settings
+width, height = 1280, 640
+player_pos = [320, 440]
+enemy_size = 50
+enemy_speed = 10
+enemy_list = []
+ 
+# Initialize score
+score = 0
+
+# Create random enemy
+def create_enemy():
+    x_pos = random.randint(0, width - enemy_size)
+    y_pos = 0
+    return [x_pos, y_pos]
+
+# Move enemies down and check if off-screen
+def move_enemies(enemy_list):
+    global score
+    for enemy in enemy_list[:]:
+        enemy[1] += enemy_speed
+        if enemy[1] > height:
+            enemy_list.remove(enemy)
+            score += 1  # Increment score when the enemy goes off-screen
+
+# Check for collisions
+def check_collision(player_pos, enemy_list):
+    px, py = player_pos
+    for enemy in enemy_list:
+        ex, ey = enemy
+        if (ex < px < ex + enemy_size or ex < px + enemy_size < ex + enemy_size) and \
+           (ey < py < ey + enemy_size or ey < py + enemy_size < ey + enemy_size):
+            return True
+    return False
+
+# Initialize webcam
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+     
+    frame = cv2.flip(frame, 1)
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    # Process the frame with MediaPipe
+    result = hands.process(rgb_frame)
+
+    # Get coordinates of the index finger tip (landmark 8)
+    if result.multi_hand_landmarks:
+        for hand_landmarks in result.multi_hand_landmarks:
+            # Get the index finger tip (landmark 8)
+            index_finger_tip = hand_landmarks.landmark[8]
+            player_pos[0] = int(index_finger_tip.x * width)
+            player_pos[1] = int(index_finger_tip.y * height)
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+    # Add new enemies at random intervals
+    if random.randint(0, 10) < 2:
+        enemy_list.append(create_enemy())
+
+    # Move enemies
+    move_enemies(enemy_list)
+
+    # Check for collision
+    if check_collision(player_pos, enemy_list):
+        cv2.putText(frame, 'Game Over!', (width//2 - 200, height//2), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 5)
+        print(f"Game Over! Final Score: {score}")
+        cv2.imshow("Object Dodging Game", frame)
+        cv2.waitKey(3000)
+        break
+
+    # Draw game elements
+    cv2.rectangle(frame, (player_pos[0], player_pos[1]), (player_pos[0] + enemy_size, player_pos[1] + enemy_size), (0, 255, 0), 3)
+    for enemy in enemy_list:
+        cv2.rectangle(frame, (enemy[0], enemy[1]), (enemy[0] + enemy_size, enemy[1] + enemy_size), (255, 0, 0), 3)
+
+    # Display score on the frame
+    cv2.putText(frame, f'Score: {score}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+    cv2.imshow("Object Dodging Game", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
